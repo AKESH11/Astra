@@ -6,9 +6,11 @@ SIH Problem ID: SIH25173 | Organization: ISRO
 
 ASTRA is an award-winning, AI-powered security assistant that transforms how security teams investigate and respond to cyber threats. Using advanced natural language processing and machine learning, ASTRA enables analysts to conduct complex security investigations in seconds using simple conversational queries.
 
-[![Demo Video](https://img.shields.io/badge/Demo-Watch%20Video-red)](https://yourlink.com)
-[![Documentation](https://img.shields.io/badge/Docs-Read%20More-blue)](./DEMO_GUIDE.md)
-[![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
+## 🚀 **[Try Live Demo](https://akesh11.github.io/Astra/)** | Requires local backend - [Setup Guide](./DEPLOYMENT.md)
+
+[![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-success?style=for-the-badge)](https://akesh11.github.io/Astra/)
+[![Documentation](https://img.shields.io/badge/📚_Read-Docs-blue?style=for-the-badge)](./DEMO_GUIDE.md)
+[![Deploy](https://img.shields.io/badge/☁️_Deploy-Guide-orange?style=for-the-badge)](./DEPLOYMENT.md)
 
 ## 🌟 Key Features
 
