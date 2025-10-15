@@ -1,0 +1,142 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.3
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      # Set heap size to prevent memory issues on smaller machines
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+    networks:
+      - astra-net
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.3
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - astra-net
+
+  gateway:
+    build: ./backend/gateway
+    container_name: gateway-1
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/gateway:/app
+      - reports_volume:/app/reports
+    depends_on:
+      nlp_service: { condition: service_healthy }
+      siem_service: { condition: service_healthy }
+      reporting_service: { condition: service_healthy }
+      blockchain_service: { condition: service_healthy }
+    networks:
+      - astra-net
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+  nlp_service:
+    build: ./backend/nlp_service
+    container_name: nlp_service-1
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    volumes:
+      - ./backend/nlp_service:/app
+    environment:
+      - OPENAI_API_BASE=http://host.docker.internal:11434/v1
+      - LLM_MODEL=llama3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - astra-net
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      
+  siem_service:
+    build: ./backend/siem_service
+    container_name: siem_service-1
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+    volumes:
+      - ./backend/siem_service:/app
+    depends_on:
+      elasticsearch: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - astra-net
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+  reporting_service:
+    build: ./backend/reporting_service
+    container_name: reporting_service-1
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+    volumes:
+      - ./backend/reporting_service:/app
+      - reports_volume:/app/reports
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8003/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - astra-net
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+  blockchain_service:
+    build: ./backend/blockchain_service
+    container_name: blockchain_service-1
+    command: uvicorn main:app --host 0.0.0.0 --port 8004 --reload
+    volumes:
+      - ./backend/blockchain_service:/app
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8004/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - astra-net
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+volumes:
+  esdata:
+    driver: local
+  reports_volume:
+    driver: local
+
+networks:
+  astra-net:
+    driver: bridge
+

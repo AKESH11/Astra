@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+
+#Pin the version to be compatible with Elasticsearch 8.11.3
+elasticsearch==8.11.0
